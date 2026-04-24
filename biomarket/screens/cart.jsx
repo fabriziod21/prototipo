@@ -12,7 +12,7 @@ const CartScreen = ({ theme, cart, onBack, onRemove, onPlaceOrder }) => {
   ];
 
   return (
-    <div style={{ flex: 1, background: theme.bg, display: 'flex', flexDirection: 'column' }}>
+    <div style={{ flex: 1, background: theme.bg, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
       <div style={{ padding: '14px 16px 10px', display: 'flex', alignItems: 'center', gap: 10 }}>
         <button onClick={onBack} style={{ background: 'transparent', border: 'none', color: theme.text, cursor: 'pointer', padding: 4 }}>
           <Icons.arrowL size={22}/>
@@ -25,7 +25,7 @@ const CartScreen = ({ theme, cart, onBack, onRemove, onPlaceOrder }) => {
         </span>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '6px 16px 16px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '6px 16px 16px', minHeight: 0 }}>
         {items.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 20px', color: theme.textDim, fontFamily: BM_FONT.sans, fontSize: 14 }}>
             Tu canasta está vacía
@@ -130,6 +130,7 @@ const CartScreen = ({ theme, cart, onBack, onRemove, onPlaceOrder }) => {
         <div style={{
           padding: '14px 16px 14px', background: theme.surface,
           borderTop: `1px solid ${theme.line}`,
+          flexShrink: 0,
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
             <div>

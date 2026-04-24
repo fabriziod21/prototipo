@@ -95,7 +95,7 @@ const PhoneFrame = ({ theme, children, width = 400, height = 860 }) => (
     display: 'flex', flexDirection: 'column', position: 'relative',
   }}>
     <StatusBarBM theme={theme}/>
-    <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: theme.bg }}>
+    <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: theme.bg, minHeight: 0 }}>
       {children}
     </div>
     <GestureBarBM theme={theme}/>
