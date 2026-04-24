@@ -5,10 +5,24 @@ const ChatScreen = ({ theme, producerId, onBack, onCheckout }) => {
   const [msgs, setMsgs] = React.useState(BM_CHAT_SEED);
   const [draft, setDraft] = React.useState('');
   const scroller = React.useRef(null);
+  const quickRef = React.useRef(null);
 
   React.useEffect(() => {
     if (scroller.current) scroller.current.scrollTop = scroller.current.scrollHeight;
   }, [msgs]);
+
+  React.useEffect(() => {
+    const el = quickRef.current;
+    if (!el) return;
+    const onWheel = (e) => {
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        e.preventDefault();
+        el.scrollLeft += e.deltaY;
+      }
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, []);
 
   const send = () => {
     if (!draft.trim()) return;
@@ -21,7 +35,7 @@ const ChatScreen = ({ theme, producerId, onBack, onCheckout }) => {
   };
 
   return (
-    <div style={{ flex: 1, background: theme.bg, display: 'flex', flexDirection: 'column' }}>
+    <div style={{ flex: 1, background: theme.bg, display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0, overflow: 'hidden' }}>
       {/* Header */}
       <div style={{
         padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10,
@@ -104,7 +118,7 @@ const ChatScreen = ({ theme, producerId, onBack, onCheckout }) => {
       </div>
 
       {/* Quick actions */}
-      <div style={{ padding: '4px 14px 8px', display: 'flex', gap: 6, overflowX: 'auto' }}>
+      <div ref={quickRef} style={{ padding: '4px 14px 8px', display: 'flex', gap: 6, overflowX: 'auto', overflowY: 'hidden', flexShrink: 0, cursor: 'grab' }}>
         {['¿A qué hora paso?', 'Yape/Plin', '¿Dirección?', 'Voy en camino'].map(q => (
           <button key={q} onClick={() => setDraft(q)} style={{
             background: theme.surface, border: `1px solid ${theme.line}`, color: theme.textDim,
@@ -116,25 +130,26 @@ const ChatScreen = ({ theme, producerId, onBack, onCheckout }) => {
 
       {/* Composer */}
       <div style={{
-        padding: '10px 14px 12px', borderTop: `1px solid ${theme.line}`, background: theme.surface,
-        display: 'flex', gap: 8, alignItems: 'center',
+        padding: '10px 12px 12px', borderTop: `1px solid ${theme.line}`, background: theme.surface,
+        display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0,
       }}>
-        <BMButton theme={theme} variant="soft" size="sm" onClick={onCheckout}
-          icon={<Icons.basket size={14}/>} style={{ flexShrink: 0 }}>
-          Cerrar trato
-        </BMButton>
+        <button onClick={onCheckout} title="Cerrar trato" style={{
+          background: theme.emeraldSoft, color: theme.emerald, border: 'none',
+          width: 40, height: 40, borderRadius: '50%', flexShrink: 0, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}><Icons.basket size={16}/></button>
         <input value={draft} onChange={e => setDraft(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && send()}
           placeholder="Escribe un mensaje…"
           style={{
-            flex: 1, background: theme.bg, border: `1px solid ${theme.line}`,
+            flex: 1, minWidth: 0, background: theme.bg, border: `1px solid ${theme.line}`,
             borderRadius: 100, padding: '10px 14px',
             color: theme.text, fontFamily: BM_FONT.sans, fontSize: 13, outline: 'none',
           }}/>
         <button onClick={send} style={{
           background: `linear-gradient(145deg, ${theme.emerald}, ${theme.emeraldDeep})`,
           color: '#fff', border: 'none', width: 40, height: 40, borderRadius: '50%',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+          flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
         }}><Icons.send size={16}/></button>
       </div>
     </div>

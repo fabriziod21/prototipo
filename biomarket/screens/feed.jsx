@@ -3,6 +3,25 @@
 const FeedScreen = ({ theme, onOpenProducer, onOpenCart, cartCount, onOpenProduct }) => {
   const [cat, setCat] = React.useState('todos');
   const [q, setQ] = React.useState('');
+  const producersScrollRef = React.useRef(null);
+  const categoriesScrollRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const attach = (el) => {
+      if (!el) return () => {};
+      const onWheel = (e) => {
+        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+          e.preventDefault();
+          el.scrollLeft += e.deltaY;
+        }
+      };
+      el.addEventListener('wheel', onWheel, { passive: false });
+      return () => el.removeEventListener('wheel', onWheel);
+    };
+    const d1 = attach(producersScrollRef.current);
+    const d2 = attach(categoriesScrollRef.current);
+    return () => { d1(); d2(); };
+  }, []);
 
   const filtered = BM_PRODUCTS_HOY.filter(p => {
     if (cat === 'todos') return true;
@@ -69,7 +88,7 @@ const FeedScreen = ({ theme, onOpenProducer, onOpenCart, cartCount, onOpenProduc
       </div>
 
       {/* Categories */}
-      <div style={{ padding: '14px 0 6px', overflowX: 'auto', overflowY: 'hidden' }}>
+      <div ref={categoriesScrollRef} style={{ padding: '14px 0 6px', overflowX: 'auto', overflowY: 'hidden', cursor: 'grab' }}>
         <div style={{ display: 'flex', gap: 8, padding: '0 20px', width: 'max-content' }}>
           {BM_CATEGORIES.map(c => {
             const Ic = Icons[c.icon];
@@ -104,12 +123,18 @@ const FeedScreen = ({ theme, onOpenProducer, onOpenCart, cartCount, onOpenProduc
           </span>
         </div>
       </div>
-      <div style={{ overflowX: 'auto', overflowY: 'hidden', paddingBottom: 4 }}>
+      <div
+        ref={producersScrollRef}
+        style={{
+          overflowX: 'auto', overflowY: 'hidden', paddingBottom: 4,
+          WebkitOverflowScrolling: 'touch', cursor: 'grab',
+        }}>
         <div style={{ display: 'flex', gap: 12, padding: '0 20px', width: 'max-content' }}>
           {featuredProducers.map(p => (
             <button key={p.id} onClick={() => onOpenProducer(p.id)} style={{
               width: 220, background: theme.surface, border: `1px solid ${theme.line}`,
               borderRadius: 20, overflow: 'hidden', padding: 0, cursor: 'pointer', textAlign: 'left',
+              scrollSnapAlign: 'start', flexShrink: 0,
             }}>
               <div style={{ height: 110, position: 'relative' }}>
                 <HeroPhoto kind={p.hero} theme={theme} radius={0}/>
