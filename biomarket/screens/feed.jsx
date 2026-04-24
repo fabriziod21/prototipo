@@ -41,7 +41,7 @@ const FeedScreen = ({ theme, onOpenProducer, onOpenCart, cartCount, onOpenProduc
               fontFamily: BM_FONT.display, fontSize: 32, color: theme.text,
               letterSpacing: -0.5, lineHeight: 1,
             }}>
-              Bio<span style={{ color: theme.emerald, fontStyle: 'italic' }}>Market</span>
+              Huerto<span style={{ color: theme.emerald, fontStyle: 'italic' }}> Vecino</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, color: theme.textDim, fontFamily: BM_FONT.sans, fontSize: 11.5, fontWeight: 500, letterSpacing: 0.8, textTransform: 'uppercase' }}>
               <Icons.pin size={12}/> Pachacámac · 2 km
