@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BioMarket · Prototipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet"/>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+  body {
+    font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
+    background: #07100d;
+    color: #eaf5f1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  /* Subtle stage */
+  .stage {
+    width: 100vw; height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(22,185,129,0.12), transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(22,185,129,0.08), transparent 50%),
+      #07100d;
+  }
+  .stage.light {
+    background:
+      radial-gradient(circle at 20% 20%, rgba(15,143,102,0.14), transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(217,178,107,0.12), transparent 50%),
+      #e7e0cf;
+  }
+  /* hide scrollbars in phone content */
+  .stage *::-webkit-scrollbar { width: 0; height: 0; background: transparent; }
+  .stage * { scrollbar-width: none; }
+  button { font-family: inherit; }
+  input, select, textarea { font-family: inherit; }
+  #root { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+  .phone-scaler { transform-origin: center center; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="biomarket/theme.jsx"></script>
+<script type="text/babel" src="biomarket/icons.jsx"></script>
+<script type="text/babel" src="biomarket/data.jsx"></script>
+<script type="text/babel" src="biomarket/art.jsx"></script>
+<script type="text/babel" src="biomarket/shell.jsx"></script>
+<script type="text/babel" src="biomarket/screens/feed.jsx"></script>
+<script type="text/babel" src="biomarket/screens/producer.jsx"></script>
+<script type="text/babel" src="biomarket/screens/map.jsx"></script>
+<script type="text/babel" src="biomarket/screens/chat.jsx"></script>
+<script type="text/babel" src="biomarket/screens/cart.jsx"></script>
+<script type="text/babel" src="biomarket/screens/publish.jsx"></script>
+<script type="text/babel" src="biomarket/screens/confirm.jsx"></script>
+
+<script type="text/babel" data-presets="env,react">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "mode": "dark"
+}/*EDITMODE-END*/;
+
+function App() {
+  const [tweaks, setTweaks] = useTweaks(TWEAK_DEFAULTS);
+  const theme = BM_THEMES[tweaks.mode] || BM_THEMES.dark;
+
+  const [tab, setTab] = React.useState('feed');
+  // stack: { screen, data? }
+  const [stack, setStack] = React.useState([{ screen: 'feed' }]);
+  const top = stack[stack.length - 1];
+
+  const [cart, setCart] = React.useState([
+    { id: 'e1', qty: 1 },
+    { id: 'v1', qty: 2 },
+  ]);
+  const cartCount = cart.reduce((s, c) => s + c.qty, 0);
+
+  // Navigation
+  const push = (screen, data) => setStack(s => [...s, { screen, data }]);
+  const pop = () => setStack(s => s.length > 1 ? s.slice(0, -1) : s);
+  const reset = (screen) => setStack([{ screen }]);
+
+  const addToCart = (id) => {
+    setCart(c => {
+      const found = c.find(x => x.id === id);
+      if (found) return c.map(x => x.id === id ? { ...x, qty: x.qty + 1 } : x);
+      return [...c, { id, qty: 1 }];
+    });
+  };
+
+  const handleTab = (id) => {
+    setTab(id);
+    if (id === 'feed') reset('feed');
+    else if (id === 'map') reset('map');
+    else if (id === 'cart') reset('cart');
+    else if (id === 'sell') reset('publish');
+    else if (id === 'chat') reset('chat-list');
+  };
+
+  let content;
+  if (top.screen === 'feed') {
+    content = <FeedScreen theme={theme}
+      cartCount={cartCount}
+      onOpenProducer={(id) => push('producer', { id })}
+      onOpenProduct={(id) => {
+        const prod = BM_PRODUCTS_HOY.find(p => p.id === id);
+        push('producer', { id: prod.producerId });
+      }}
+      onOpenCart={() => { setTab('cart'); reset('cart'); }}
+    />;
+  } else if (top.screen === 'producer') {
+    content = <ProducerScreen theme={theme}
+      producerId={top.data.id}
+      onBack={pop}
+      onChat={() => push('chat', { producerId: top.data.id })}
+      onAddToCart={(id) => { addToCart(id); }}
+    />;
+  } else if (top.screen === 'map') {
+    content = <MapScreen theme={theme}
+      onBack={() => { setTab('feed'); reset('feed'); }}
+      onOpenProducer={(id) => push('producer', { id })}
+    />;
+  } else if (top.screen === 'chat') {
+    content = <ChatScreen theme={theme}
+      producerId={top.data?.producerId || 'p1'}
+      onBack={pop}
+      onCheckout={() => { setTab('cart'); reset('cart'); }}
+    />;
+  } else if (top.screen === 'chat-list') {
+    content = <ChatListScreen theme={theme}
+      onOpen={(producerId) => push('chat', { producerId })}
+      onBack={() => { setTab('feed'); reset('feed'); }}
+    />;
+  } else if (top.screen === 'cart') {
+    content = <CartScreen theme={theme}
+      cart={cart}
+      onBack={() => { setTab('feed'); reset('feed'); }}
+      onRemove={(id) => setCart(c => c.filter(x => x.id !== id))}
+      onPlaceOrder={() => push('confirm', { kind: 'order' })}
+    />;
+  } else if (top.screen === 'publish') {
+    content = <PublishScreen theme={theme}
+      onBack={() => { setTab('feed'); reset('feed'); }}
+      onPublished={(data) => push('confirm', { kind: 'publish', data })}
+    />;
+  } else if (top.screen === 'confirm') {
+    content = <ConfirmScreen theme={theme}
+      kind={top.data.kind}
+      data={top.data.data}
+      onDone={() => { setTab('feed'); reset('feed'); }}
+    />;
+  }
+
+  // Screens that HIDE bottom tabs
+  const hideTabs = ['chat', 'confirm', 'publish'].includes(top.screen);
+
+  // Auto-scale the phone to fit the viewport
+  const [scale, setScale] = React.useState(1);
+  React.useEffect(() => {
+    const PHONE_W = 400, PHONE_H = 860;
+    const fit = () => {
+      const pad = 40;
+      const s = Math.min(
+        (window.innerWidth - pad) / PHONE_W,
+        (window.innerHeight - pad) / PHONE_H,
+        1
+      );
+      setScale(s);
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, []);
+
+  return (
+    <div className={`stage ${tweaks.mode}`}>
+      <div className="phone-scaler" style={{ transform: `scale(${scale})` }}>
+      <PhoneFrame theme={theme}>
+        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: theme.bg }}>
+          {content}
+        </div>
+        {!hideTabs && <BottomTabs theme={theme} current={tab} onChange={handleTab}/>}
+      </PhoneFrame>
+      </div>
+
+      <TweaksPanel title="Tweaks">
+        <TweakSection title="Apariencia">
+          <TweakRadio
+            label="Modo"
+            value={tweaks.mode}
+            options={[{ value: 'dark', label: 'Oscuro' }, { value: 'light', label: 'Claro' }]}
+            onChange={(v) => setTweaks({ mode: v })}
+          />
+        </TweakSection>
+        <TweakSection title="Ir a pantalla">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+            {[
+              ['Vitrina', () => { setTab('feed'); reset('feed'); }],
+              ['Productor', () => push('producer', { id: 'p1' })],
+              ['Mapa', () => { setTab('map'); reset('map'); }],
+              ['Chat', () => push('chat', { producerId: 'p1' })],
+              ['Carrito', () => { setTab('cart'); reset('cart'); }],
+              ['Publicar', () => reset('publish')],
+            ].map(([label, fn]) => (
+              <TweakButton key={label} onClick={fn}>{label}</TweakButton>
+            ))}
+          </div>
+        </TweakSection>
+      </TweaksPanel>
+    </div>
+  );
+}
+
+// Simple chat list (inline)
+function ChatListScreen({ theme, onOpen, onBack }) {
+  const items = BM_PRODUCERS.map((p, i) => ({
+    ...p,
+    last: ['Claro, la puerta verde — calle…', 'Mañana te llevo los tomates.', 'Queso listo desde las 10am', 'El pollo está descansando aún.'][i],
+    time: ['09:14', 'Ayer', 'Lun', '2d'][i],
+    unread: i === 0 ? 2 : 0,
+  }));
+  return (
+    <div style={{ flex: 1, background: theme.bg, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: '18px 20px 10px' }}>
+        <h1 style={{ margin: 0, color: theme.text, fontFamily: BM_FONT.display, fontSize: 30, fontWeight: 400, letterSpacing: -0.5 }}>
+          Conversaciones
+        </h1>
+        <div style={{ color: theme.textDim, fontSize: 12.5, fontFamily: BM_FONT.sans, marginTop: 4 }}>
+          Coordina recojo, entregas y preguntas.
+        </div>
+      </div>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '4px 12px 20px' }}>
+        {items.map(p => (
+          <button key={p.id} onClick={() => onOpen(p.id)} style={{
+            width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left',
+            padding: '12px', borderRadius: 16, display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: 14,
+              background: `linear-gradient(145deg, ${theme.emerald}, ${theme.emeraldDeep})`,
+              color: '#fff', fontFamily: BM_FONT.display, fontSize: 18,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            }}>{p.avatar}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span style={{ color: theme.text, fontFamily: BM_FONT.sans, fontSize: 14.5, fontWeight: 600 }}>{p.name}</span>
+                <span style={{ color: theme.textMute, fontSize: 11, fontFamily: BM_FONT.sans }}>{p.time}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 3 }}>
+                <span style={{ color: theme.textDim, fontFamily: BM_FONT.sans, fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 220 }}>
+                  {p.last}
+                </span>
+                {p.unread > 0 && (
+                  <span style={{
+                    background: theme.emerald, color: '#fff',
+                    minWidth: 20, height: 20, borderRadius: 10, padding: '0 6px',
+                    fontSize: 10.5, fontWeight: 700, fontFamily: BM_FONT.sans,
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  }}>{p.unread}</span>
+                )}
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
